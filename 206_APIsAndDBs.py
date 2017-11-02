@@ -65,14 +65,12 @@ def uprint(*objects, sep=' ', end='\n', file=sys.stdout):
     else:
         f = lambda obj: str(obj).encode(enc, errors='backslashreplace').decode(enc)
         print(*map(f, objects), sep=sep, end=end, file=file)
-
-
 # Define your function get_user_tweets here:
 def get_user_tweets(screen_name):
 	if screen_name in CACHE_DICTION:
 		print("Data was in the cache")
 	else:
-		new_tweets = api.user_timeline(screen_name = screen_name,count=200)
+		new_tweets = api.user_timeline(screen_name = screen_name)
 		#v = api.search(q=user)
 		uprint(new_tweets)
 		uprint("TEXT: ", new_tweets[0]['text'])
@@ -93,25 +91,18 @@ def get_user_tweets(screen_name):
 			# #number of retweets
 			# print('\n')
 		try:
-			CACHE_DICTION[tweet] =  new_tweets
+			CACHE_DICTION[screen_name] =  new_tweets
 			dumped_json_cache = json.dumps(CACHE_DICTION)
 			fw = open(CACHE_FNAME,"w")
 			fw.write(dumped_json_cache)
 			fw.close() # Close the open file
-			return CACHE_DICTION[tweet]
+			return CACHE_DICTION[screen_name]
 		except:
 			print("Wasn't in cache")
 			return None
-
-
-
-
 # Write an invocation to the function for the "umich" user timeline and
 # save the result in a variable called umich_tweets:
-
 umich_tweets = get_user_tweets("umsi")
-
-
 ## Task 2 - Creating database and loading data into database
 ## You should load into the Users table:
 # The umich user, and all of the data about users that are mentioned
@@ -119,49 +110,33 @@ umich_tweets = get_user_tweets("umsi")
 # NOTE: For example, if the user with the "TedXUM" screen name is
 # mentioned in the umich timeline, that Twitter user's info should be
 # in the Users table, etc.
-
-
-
 ## You should load into the Tweets table:
 # Info about all the tweets (at least 20) that you gather from the
 # umich timeline.
 # NOTE: Be careful that you have the correct user ID reference in
 # the user_id column! See below hints.
-
-
 ## HINT: There's a Tweepy method to get user info, so when you have a
 ## user id or screenname you can find alllll the info you want about
 ## the user.
-
 ## HINT: The users mentioned in each tweet are included in the tweet
 ## dictionary -- you don't need to do any manipulation of the Tweet
 ## text to find out which they are! Do some nested data investigation
 ## on a dictionary that represents 1 tweet to see it!
-
-
 ## Task 3 - Making queries, saving data, fetching data
-
 # All of the following sub-tasks require writing SQL statements
 # and executing them using Python.
-
 # Make a query to select all of the records in the Users database.
 # Save the list of tuples in a variable called users_info.
-
 users_info = True
-
 # Make a query to select all of the user screen names from the database.
 # Save a resulting list of strings (NOT tuples, the strings inside them!)
 # in the variable screen_names. HINT: a list comprehension will make
 # this easier to complete!
 screen_names = True
-
-
 # Make a query to select all of the tweets (full rows of tweet information)
 # that have been retweeted more than 10 times. Save the result
 # (a list of tuples, or an empty list) in a variable called retweets.
 retweets = True
-
-
 # Make a query to select all the descriptions (descriptions only) of
 # the users who have favorited more than 500 tweets. Access all those
 # strings, and save them in a variable called favorites,
@@ -171,7 +146,7 @@ favorites = True
 
 # Make a query using an INNER JOIN to get a list of tuples with 2
 # elements in each tuple: the user screenname and the text of the
-# tweet. Save the resulting list of tuples in a variable called joined_data2.
+# tweet. Save he resulting list of tuples in a variable called joined_data2.
 joined_data = True
 
 # Make a query using an INNER JOIN to get a list of tuples with 2
