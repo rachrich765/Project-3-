@@ -64,11 +64,10 @@ def uprint(*objects, sep=' ', end='\n', file=sys.stdout):
         f = lambda obj: str(obj).encode(enc, errors='backslashreplace').decode(enc)
         print(*map(f, objects), sep=sep, end=end, file=file)
 # Define your function get_user_tweets here:
-def get_user_tweets(tweet):
+def get_user_tweets(user):
     if tweet in CACHE_DICTION:
         print("Data was in the cache")
         twitter_results = CACHE_DICTION['umsi']
-
     else:
         print('getting data from internet')
         twitter_results = api.user_timeline('umsi')
@@ -98,8 +97,8 @@ def get_user_tweets(tweet):
 
 # Write an invocation to the function for the "umich" user timeline and
 # save the result in a variable called umich_tweets:
-tweet = 'umsi'
-umich_tweets = get_user_tweets(tweet)
+user = 'umsi'
+umich_tweets = get_user_tweets(user)
 ## Task 2 - Creating database and loading data into database
 ## You should load into the Users table:
 # The umich user, and all of the data about users that are mentioned
@@ -108,7 +107,10 @@ conn = sqlite3.connect('206_APIsAndDBs.sqlite')
 cur = conn.cursor()
 cur.execute('DROP TABLE IF EXISTS Tweets')
 cur.execute("CREATE TABLE Tweets(tweet_id TEXT, tweet_text TEXT, author TEXT, time_posted TIMESTAMP, retweets NUMBER)")
-umsi_tweets = get_user_tweets(tweet)
+umsi_tweets = get_user_tweets(user)
+for tw in umsi_tweets:
+    tup = tw['id'], tw['text'],tw['user']['id'], tw['created_at'], tw['retweet_count']#key to project 3
+    cur.execute("INSERT INTO Tweets (tweet_id, tweet_text, author, time_posted, retweets) VALUES (?, ?, ?, ?, ?)", tup)
 # NOTE: For example, if the user with the "TedXUM" screen name is
 # mentioned in the umich timeline, that Twitter user's info should be
 # in the Users table, etc.
