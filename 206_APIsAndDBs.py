@@ -65,7 +65,7 @@ def uprint(*objects, sep=' ', end='\n', file=sys.stdout):
         print(*map(f, objects), sep=sep, end=end, file=file)
 # Define your function get_user_tweets here:
 def get_user_tweets(user):
-    if tweet in CACHE_DICTION:
+    if user in CACHE_DICTION:
         print("Data was in the cache")
         twitter_results = CACHE_DICTION['umsi']
     else:
