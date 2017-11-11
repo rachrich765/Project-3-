@@ -4,7 +4,6 @@
 
 ##THIS STARTER CODE DOES NOT RUN!!
 
-
 ##OBJECTIVE:
 ## In this assignment you will be creating database and loading data
 ## into database.  You will also be performing SQL queries on the data.
@@ -66,51 +65,51 @@ def uprint(*objects, sep=' ', end='\n', file=sys.stdout):
 # Define your function get_user_tweets here:
 def get_user_tweets(user):
     if user in CACHE_DICTION:
-        print("Data was in the cache")
         twitter_results = CACHE_DICTION['umsi']
     else:
-        print('getting data from internet')
         twitter_results = api.user_timeline('umsi')
         CACHE_DICTION['umsi'] =  twitter_results
         fw = open(CACHE_FNAME,"w")
         fw.write(json.dumps(CACHE_DICTION))
         fw.close() # Close the open file
     return twitter_results
-		# uprint(new_tweets)
-		# uprint("TEXT: ", new_tweets[0]['text'])
-		# uprint("id string tweet : ", new_tweets[0]['id_str'])
-		# uprint("retweet count : ", new_tweets[0]['retweet_count'])
-		# 	# #"in_reply_to_status_id_str": null
 		# uprint("screen name mentioned user: ", new_tweets[0]['entities']['user_mentions'][0]['screen_name'])
 		# #string id of mentioned user
 		# uprint("string id mentioned user: ", new_tweets[0]['entities']['user_mentions'][0]['id_str'])
-		# 	# #string id of actual tweeter
-		# uprint("user id of tweet : ", new_tweets[0]['user']['id_str'])
-		# 	# #screen name of actual user
-		# uprint("screen name user : ", new_tweets[0]['user']['screen_name'])
-		# 	# #number of tweets user has favorited
-		# uprint("favorites : ", new_tweets[0]['user']['favourites_count'])
-		# 	# #description of user
-		# uprint("description of user : ", new_tweets[0]['user']['description'])
-		# 	# #number of retweets
-		# 	# print('\n')
-
 # Write an invocation to the function for the "umich" user timeline and
 # save the result in a variable called umich_tweets:
 user = 'umsi'
-umich_tweets = get_user_tweets(user)
+
 ## Task 2 - Creating database and loading data into database
 ## You should load into the Users table:
 # The umich user, and all of the data about users that are mentioned
-# in the umich timeline.
+# # # in the umich timeline.
+conn = sqlite3.connect('206_APIsAndDBs.sqlite')
+cur = conn.cursor()
+cur.execute('DROP TABLE IF EXISTS Users')
+cur.execute("CREATE TABLE Users (user_id TEXT PRIMARY KEY, screen_name TEXT NOT NULL, num_favs NUMBER NOT NULL, description TEXT NOT NULL)")
+umich_tweets = get_user_tweets(user)
+for tw in umich_tweets:
+    tup = tw['user']['id_str'], tw['user']['screen_name'],tw['user']['favourites_count'],tw['user']['description'] #key to project 3
+    cur.execute("INSERT INTO Users (user_id, screen_name, num_favs, description) VALUES (?, ?, ?, ?)", tup)
+    cur.execute('SELECT user_id FROM Users WHERE ')
+    try:
+        acct = cur.fetchone()[0]
+    except:
+        print('No unretrieved twitter accounts found')
+        continue
+cur.close()
+conn.commit()
 conn = sqlite3.connect('206_APIsAndDBs.sqlite')
 cur = conn.cursor()
 cur.execute('DROP TABLE IF EXISTS Tweets')
-cur.execute("CREATE TABLE Tweets(tweet_id TEXT, tweet_text TEXT, author TEXT, time_posted TIMESTAMP, retweets NUMBER)")
-umsi_tweets = get_user_tweets(user)
-for tw in umsi_tweets:
-    tup = tw['id'], tw['text'],tw['user']['id'], tw['created_at'], tw['retweet_count']#key to project 3
-    cur.execute("INSERT INTO Tweets (tweet_id, tweet_text, author, time_posted, retweets) VALUES (?, ?, ?, ?, ?)", tup)
+cur.execute("CREATE TABLE Tweets (tweet_id TEXT PRIMARY KEY, tweet_text TEXT NOT NULL, FOREIGN KEY(user_posted) REFERENCES Users(user_id), time_posted TIMESTAMP NOT NULL, retweets NUMBER NOT NULL)")
+umich_tweets = get_user_tweets(user)
+for tw in umich_tweets:
+    tup = tw['id_str'], tw['text'], tw['user']['id_str'], tw['created_at'], tw['retweet_count']#key to project 3
+    cur.execute("INSERT INTO Tweets (tweet_id, tweet_text, user_posted, time_posted, retweets) VALUES (?, ?, ?, ?, ?)", tup)
+cur.close
+conn.commit()
 # NOTE: For example, if the user with the "TedXUM" screen name is
 # mentioned in the umich timeline, that Twitter user's info should be
 # in the Users table, etc.
@@ -150,26 +149,19 @@ favorites = True
 # elements in each tuple: the user screenname and the text of the
 # tweet. Save he resulting list of tuples in a variable called joined_data2.
 joined_data = True
-
 # Make a query using an INNER JOIN to get a list of tuples with 2
 # elements in each tuple: the user screenname and the text of the
 # tweet in descending order based on retweets. Save the resulting
 # list of tuples in a variable called joined_data2.
-
 joined_data2 = True
-
-
 ### IMPORTANT: MAKE SURE TO CLOSE YOUR DATABASE CONNECTION AT THE END
 ### OF THE FILE HERE SO YOU DO NOT LOCK YOUR DATABASE (it's fixable,
 ### but it's a pain). ###
-
 ###### TESTS APPEAR BELOW THIS LINE ######
 ###### Note that the tests are necessary to pass, but not sufficient --
 ###### must make sure you've followed the instructions accurately!
 ######
 print("\n\nBELOW THIS LINE IS OUTPUT FROM TESTS:\n")
-
-
 class Task1(unittest.TestCase):
 	def test_umich_caching(self):
 		fstr = open("206_APIsAndDBs_cache.json","r")
