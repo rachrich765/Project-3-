@@ -35,7 +35,6 @@ auth.set_access_token(access_token, access_token_secret)
 api = tweepy.API(auth, parser=tweepy.parsers.JSONParser())
 
 ##### END TWEEPY SETUP CODE
-
 ## Task 1 - Gathering data
 ## Define a function called get_user_tweets that gets at least 20 Tweets
 ## from a specific Twitter user's timeline, and uses caching. The function
@@ -65,51 +64,49 @@ def uprint(*objects, sep=' ', end='\n', file=sys.stdout):
 # Define your function get_user_tweets here:
 def get_user_tweets(user):
     if user in CACHE_DICTION:
-        twitter_results = CACHE_DICTION['umsi']
+        twitter_results = CACHE_DICTION[user]
     else:
-        twitter_results = api.user_timeline('umsi')
-        CACHE_DICTION['umsi'] =  twitter_results
+        twitter_results = api.user_timeline(user)
+        CACHE_DICTION[user] =  twitter_results
         fw = open(CACHE_FNAME,"w")
         fw.write(json.dumps(CACHE_DICTION))
         fw.close() # Close the open file
     return twitter_results
-		# uprint("screen name mentioned user: ", new_tweets[0]['entities']['user_mentions'][0]['screen_name'])
+
 		# #string id of mentioned user
-		# uprint("string id mentioned user: ", new_tweets[0]['entities']['user_mentions'][0]['id_str'])
+#uprint("string id mentioned user: ", new_tweets[0]['entities']['user_mentions'][0]['i'])
 # Write an invocation to the function for the "umich" user timeline and
 # save the result in a variable called umich_tweets:
-user = 'umsi'
-
+#user = 'umich'
+umich_tweets = get_user_tweets('umich')
 ## Task 2 - Creating database and loading data into database
 ## You should load into the Users table:
 # The umich user, and all of the data about users that are mentioned
 # # # in the umich timeline.
 conn = sqlite3.connect('206_APIsAndDBs.sqlite')
 cur = conn.cursor()
-cur.execute('DROP TABLE IF EXISTS Users')
-cur.execute("CREATE TABLE Users (user_id TEXT PRIMARY KEY, screen_name TEXT NOT NULL, num_favs NUMBER NOT NULL, description TEXT NOT NULL)")
-umich_tweets = get_user_tweets(user)
-for tw in umich_tweets:
-    tup = tw['user']['id_str'], tw['user']['screen_name'],tw['user']['favourites_count'],tw['user']['description'] #key to project 3
-    cur.execute("INSERT INTO Users (user_id, screen_name, num_favs, description) VALUES (?, ?, ?, ?)", tup)
-    cur.execute('SELECT user_id FROM Users WHERE ')
-    try:
-        acct = cur.fetchone()[0]
-    except:
-        print('No unretrieved twitter accounts found')
-        continue
-cur.close()
+cur.execute("DROP TABLE IF EXISTS Users")
+cur.execute("CREATE TABLE Users (user_id TEXT PRIMARY KEY, screen_name TEXT, num_favs NUMBER, description TEXT)")
+for dic1 in umich_tweets:
+    for l1 in dic1['entities']['user_mentions']:
+        mentioned_user = l1['screen_name']
+        user_id = l1['id']
+        for tw in umich_tweets:
+            tup = user_id, mentioned_user,tw["user"]["favourites_count"],tw["user"]["description"] #key to project 3
+            try:
+                cur.execute("INSERT INTO Users (user_id, screen_name, num_favs, description) VALUES (?, ?, ?, ?)", tup)
+            except:
+                continue
 conn.commit()
 conn = sqlite3.connect('206_APIsAndDBs.sqlite')
 cur = conn.cursor()
 cur.execute('DROP TABLE IF EXISTS Tweets')
-cur.execute("CREATE TABLE Tweets (tweet_id TEXT PRIMARY KEY, tweet_text TEXT NOT NULL, FOREIGN KEY(user_posted) REFERENCES Users(user_id), time_posted TIMESTAMP NOT NULL, retweets NUMBER NOT NULL)")
-umich_tweets = get_user_tweets(user)
+cur.execute("CREATE TABLE Tweets (tweet_id TEXT PRIMARY KEY, text TEXT NOT NULL, user_posted TEXT, time_posted TIMESTAMP NOT NULL, retweets NUMBER NOT NULL)")
 for tw in umich_tweets:
-    tup = tw['id_str'], tw['text'], tw['user']['id_str'], tw['created_at'], tw['retweet_count']#key to project 3
-    cur.execute("INSERT INTO Tweets (tweet_id, tweet_text, user_posted, time_posted, retweets) VALUES (?, ?, ?, ?, ?)", tup)
-cur.close
+    tup = tw['id'], tw['text'], tw['user']['id'], tw['created_at'], tw['retweet_count']#key to project 3
+    cur.execute("INSERT INTO Tweets (tweet_id, text, user_posted, time_posted, retweets) VALUES (?, ?, ?, ?, ?)", tup)
 conn.commit()
+#cur.close()
 # NOTE: For example, if the user with the "TedXUM" screen name is
 # mentioned in the umich timeline, that Twitter user's info should be
 # in the Users table, etc.
