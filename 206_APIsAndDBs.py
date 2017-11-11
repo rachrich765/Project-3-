@@ -17,7 +17,7 @@ import json
 import sqlite3
 import sys
 ## Your name:Rachel Richardson
-## The names of anyone you worked with on this project:
+## The names of anyone you worked with on this project: Sarah Jomaa
 
 #####
 
@@ -72,13 +72,10 @@ def get_user_tweets(user):
         fw.write(json.dumps(CACHE_DICTION))
         fw.close() # Close the open file
     return twitter_results
-
-		# #string id of mentioned user
-#uprint("string id mentioned user: ", new_tweets[0]['entities']['user_mentions'][0]['i'])
+umich_tweets = get_user_tweets('umich')
 # Write an invocation to the function for the "umich" user timeline and
 # save the result in a variable called umich_tweets:
 #user = 'umich'
-umich_tweets = get_user_tweets('umich')
 ## Task 2 - Creating database and loading data into database
 ## You should load into the Users table:
 # The umich user, and all of the data about users that are mentioned
@@ -89,10 +86,13 @@ cur.execute("DROP TABLE IF EXISTS Users")
 cur.execute("CREATE TABLE Users (user_id TEXT PRIMARY KEY, screen_name TEXT, num_favs NUMBER, description TEXT)")
 for dic1 in umich_tweets:
     for l1 in dic1['entities']['user_mentions']:
+        user_id = api.get_user(l1['screen_name'])
         mentioned_user = l1['screen_name']
-        user_id = l1['id']
+        descriptions_for_users = user_id['description']
+        num_favs = user_id['favourites_count']
+        user_id = l1['id_str']
         for tw in umich_tweets:
-            tup = user_id, mentioned_user,tw["user"]["favourites_count"],tw["user"]["description"] #key to project 3
+            tup = user_id, mentioned_user, num_favs, descriptions_for_users #key to project 3
             try:
                 cur.execute("INSERT INTO Users (user_id, screen_name, num_favs, description) VALUES (?, ?, ?, ?)", tup)
             except:
@@ -101,12 +101,12 @@ conn.commit()
 conn = sqlite3.connect('206_APIsAndDBs.sqlite')
 cur = conn.cursor()
 cur.execute('DROP TABLE IF EXISTS Tweets')
-cur.execute("CREATE TABLE Tweets (tweet_id TEXT PRIMARY KEY, text TEXT NOT NULL, user_posted TEXT, time_posted TIMESTAMP NOT NULL, retweets NUMBER NOT NULL)")
+cur.execute("CREATE TABLE Tweets (tweet_id TEXT PRIMARY KEY, text TEXT NOT NULL, user_posted, time_posted DATETIME NOT NULL, retweets NUMBER NOT NULL)")
 for tw in umich_tweets:
-    tup = tw['id'], tw['text'], tw['user']['id'], tw['created_at'], tw['retweet_count']#key to project 3
+    tup = tw['id_str'], tw['text'], tw['user']['id_str'], tw['created_at'], tw['retweet_count']#key to project 3
     cur.execute("INSERT INTO Tweets (tweet_id, text, user_posted, time_posted, retweets) VALUES (?, ?, ?, ?, ?)", tup)
 conn.commit()
-#cur.close()
+cur.close()
 # NOTE: For example, if the user with the "TedXUM" screen name is
 # mentioned in the umich timeline, that Twitter user's info should be
 # in the Users table, etc.
