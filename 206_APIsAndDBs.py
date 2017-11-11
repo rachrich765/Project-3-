@@ -84,6 +84,12 @@ conn = sqlite3.connect('206_APIsAndDBs.sqlite')
 cur = conn.cursor()
 cur.execute("DROP TABLE IF EXISTS Users")
 cur.execute("CREATE TABLE Users (user_id TEXT PRIMARY KEY, screen_name TEXT, num_favs NUMBER, description TEXT)")
+for tw in umich_tweets:
+    tup = tw['user']['id'], tw['user']['screen_name'], tw['user']['favourites_count'], tw['user']['description']
+    try:
+        cur.execute("INSERT INTO Users (user_id, screen_name, num_favs, description) VALUES (?, ?, ?, ?)", tup)
+    except:
+        continue
 for dic1 in umich_tweets:
     for l1 in dic1['entities']['user_mentions']:
         user_id = api.get_user(l1['screen_name'])
