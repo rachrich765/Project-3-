@@ -85,7 +85,7 @@ cur = conn.cursor()
 cur.execute("DROP TABLE IF EXISTS Users")
 cur.execute("CREATE TABLE Users (user_id TEXT PRIMARY KEY, screen_name TEXT, num_favs NUMBER, description TEXT)")
 for tw in umich_tweets:
-    tup = tw['user']['id'], tw['user']['screen_name'], tw['user']['favourites_count'], tw['user']['description']
+    tup = tw['user']['id_str'], tw['user']['screen_name'], tw['user']['favourites_count'], tw['user']['description']
     try:
         cur.execute("INSERT INTO Users (user_id, screen_name, num_favs, description) VALUES (?, ?, ?, ?)", tup)
     except:
@@ -104,15 +104,15 @@ for dic1 in umich_tweets:
             except:
                 continue
 conn.commit()
+
 conn = sqlite3.connect('206_APIsAndDBs.sqlite')
 cur = conn.cursor()
 cur.execute('DROP TABLE IF EXISTS Tweets')
 cur.execute("CREATE TABLE Tweets (tweet_id TEXT PRIMARY KEY, text TEXT NOT NULL, user_posted, time_posted DATETIME NOT NULL, retweets NUMBER NOT NULL)")
 for tw in umich_tweets:
     tup = tw['id_str'], tw['text'], tw['user']['id_str'], tw['created_at'], tw['retweet_count']#key to project 3
-    cur.execute("INSERT INTO Tweets (tweet_id, text, user_posted, time_posted, retweets) VALUES (?, ?, ?, ?, ?)", tup)
+    cur.execute("INSERT INTO Tweets (tweet_id, text, user_posted , time_posted, retweets) VALUES (?, ?, ?, ?, ?)", tup)
 conn.commit()
-cur.close()
 # NOTE: For example, if the user with the "TedXUM" screen name is
 # mentioned in the umich timeline, that Twitter user's info should be
 # in the Users table, etc.
@@ -133,30 +133,56 @@ cur.close()
 # and executing them using Python.
 # Make a query to select all of the records in the Users database.
 # Save the list of tuples in a variable called users_info.
-users_info = True
+users_info = []
+cur.execute("SELECT * from Users")
+y = cur.fetchall()
+for x in y:
+    users_info.append(x)
 # Make a query to select all of the user screen names from the database.
 # Save a resulting list of strings (NOT tuples, the strings inside them!)
 # in the variable screen_names. HINT: a list comprehension will make
 # this easier to complete!
-screen_names = True
+screen_names = []
+cur.execute("SELECT screen_name from Users")
+y = cur.fetchall()
+for x in y:
+    screen_names.append(x[0])
 # Make a query to select all of the tweets (full rows of tweet information)
 # that have been retweeted more than 10 times. Save the result
 # (a list of tuples, or an empty list) in a variable called retweets.
-retweets = True
+retweets = []
+cur.execute("SELECT * from Tweets WHERE retweets > 10")
+y = cur.fetchall()
+for x in y:
+    retweets.append(x)
 # Make a query to select all the descriptions (descriptions only) of
 # the users who have favorited more than 500 tweets. Access all those
 # strings, and save them in a variable called favorites,
 # which should ultimately be a list of strings.
-favorites = True
+favorites = []
+cur.execute("SELECT description from Users WHERE num_favs > 500")
+y = cur.fetchall()
+for x in y:
+    favorites.append(x[0])
 # Make a query using an INNER JOIN to get a list of tuples with 2
 # elements in each tuple: the user screenname and the text of the
 # tweet. Save he resulting list of tuples in a variable called joined_data2.
-joined_data = True
+joined_data = []
+cur.execute("SELECT screen_name, text FROM Users INNER JOIN Tweets WHERE Users.user_id == Tweets.user_posted")
+y = cur.fetchall()
+for x in y:
+    joined_data.append(x)
 # Make a query using an INNER JOIN to get a list of tuples with 2
 # elements in each tuple: the user screenname and the text of the
 # tweet in descending order based on retweets. Save the resulting
 # list of tuples in a variable called joined_data2.
-joined_data2 = True
+joined_data2 = []
+cur.execute("SELECT screen_name, text FROM Users INNER JOIN Tweets ORDER BY retweets DESC")
+y = cur.fetchall()
+for x in y:
+    joined_data2.append(x)
+#uprint(joined_data2)
+cur.close()
 ### IMPORTANT: MAKE SURE TO CLOSE YOUR DATABASE CONNECTION AT THE END
 ### OF THE FILE HERE SO YOU DO NOT LOCK YOUR DATABASE (it's fixable,
 ### but it's a pain). ###
