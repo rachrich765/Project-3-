@@ -42,7 +42,6 @@ api = tweepy.API(auth, parser=tweepy.parsers.JSONParser())
 ## from Twitter. (This may sound familiar...) We have provided a
 ## CACHE_FNAME variable for you for the cache file name, but you must
 ## write the rest of the code in this file.
-
 CACHE_FNAME = "206_APIsAndDBs_cache.json"
 # Put the rest of your caching setup here:
 try:
@@ -84,12 +83,14 @@ conn = sqlite3.connect('206_APIsAndDBs.sqlite')
 cur = conn.cursor()
 cur.execute("DROP TABLE IF EXISTS Users")
 cur.execute("CREATE TABLE Users (user_id TEXT PRIMARY KEY, screen_name TEXT, num_favs NUMBER, description TEXT)")
+#put UMich user in Users table
 for tw in umich_tweets:
     tup = tw['user']['id_str'], tw['user']['screen_name'], tw['user']['favourites_count'], tw['user']['description']
     try:
         cur.execute("INSERT INTO Users (user_id, screen_name, num_favs, description) VALUES (?, ?, ?, ?)", tup)
     except:
         continue
+#access mentioned users in dictionary from cache file
 for dic1 in umich_tweets:
     for l1 in dic1['entities']['user_mentions']:
         user_id = api.get_user(l1['screen_name'])
@@ -98,7 +99,7 @@ for dic1 in umich_tweets:
         num_favs = user_id['favourites_count']
         user_id = l1['id_str']
         for tw in umich_tweets:
-            tup = user_id, mentioned_user, num_favs, descriptions_for_users #key to project 3
+            tup = user_id, mentioned_user, num_favs, descriptions_for_users
             try:
                 cur.execute("INSERT INTO Users (user_id, screen_name, num_favs, description) VALUES (?, ?, ?, ?)", tup)
             except:
@@ -109,8 +110,10 @@ conn = sqlite3.connect('206_APIsAndDBs.sqlite')
 cur = conn.cursor()
 cur.execute('DROP TABLE IF EXISTS Tweets')
 cur.execute("CREATE TABLE Tweets (tweet_id TEXT PRIMARY KEY, text TEXT NOT NULL, user_posted, time_posted DATETIME NOT NULL, retweets NUMBER NOT NULL)")
+
 for tw in umich_tweets:
     tup = tw['id_str'], tw['text'], tw['user']['id_str'], tw['created_at'], tw['retweet_count']#key to project 3
+
     cur.execute("INSERT INTO Tweets (tweet_id, text, user_posted , time_posted, retweets) VALUES (?, ?, ?, ?, ?)", tup)
 conn.commit()
 # NOTE: For example, if the user with the "TedXUM" screen name is
@@ -134,6 +137,7 @@ conn.commit()
 # Make a query to select all of the records in the Users database.
 # Save the list of tuples in a variable called users_info.
 users_info = []
+
 cur.execute("SELECT * from Users")
 y = cur.fetchall()
 for x in y:
@@ -143,6 +147,7 @@ for x in y:
 # in the variable screen_names. HINT: a list comprehension will make
 # this easier to complete!
 screen_names = []
+
 cur.execute("SELECT screen_name from Users")
 y = cur.fetchall()
 for x in y:
@@ -151,6 +156,7 @@ for x in y:
 # that have been retweeted more than 10 times. Save the result
 # (a list of tuples, or an empty list) in a variable called retweets.
 retweets = []
+
 cur.execute("SELECT * from Tweets WHERE retweets > 10")
 y = cur.fetchall()
 for x in y:
@@ -160,6 +166,7 @@ for x in y:
 # strings, and save them in a variable called favorites,
 # which should ultimately be a list of strings.
 favorites = []
+
 cur.execute("SELECT description from Users WHERE num_favs > 500")
 y = cur.fetchall()
 for x in y:
@@ -168,6 +175,7 @@ for x in y:
 # elements in each tuple: the user screenname and the text of the
 # tweet. Save he resulting list of tuples in a variable called joined_data2.
 joined_data = []
+
 cur.execute("SELECT screen_name, text FROM Users INNER JOIN Tweets WHERE Users.user_id == Tweets.user_posted")
 y = cur.fetchall()
 for x in y:
@@ -177,11 +185,11 @@ for x in y:
 # tweet in descending order based on retweets. Save the resulting
 # list of tuples in a variable called joined_data2.
 joined_data2 = []
-cur.execute("SELECT screen_name, text FROM Users INNER JOIN Tweets ORDER BY retweets DESC")
+
+cur.execute("SELECT screen_name, text FROM Users INNER JOIN Tweets WHERE Users.user_id == Tweets.user_posted ORDER BY retweets DESC")
 y = cur.fetchall()
 for x in y:
     joined_data2.append(x)
-#uprint(joined_data2)
 cur.close()
 ### IMPORTANT: MAKE SURE TO CLOSE YOUR DATABASE CONNECTION AT THE END
 ### OF THE FILE HERE SO YOU DO NOT LOCK YOUR DATABASE (it's fixable,
